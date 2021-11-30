@@ -10,29 +10,38 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # - macos-latest
+          - macos-latest
           - ubuntu-latest
           - windows-latest
 
     runs-on: ${{ matrix.platform }}
     steps:
-    - uses: actions/checkout@v2
-    - name: setup node
-      uses: actions/setup-node@v1
-      with:
-        node-version: 16
-    - name: install Rust stable
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-    - name: install webkit2gtk (ubuntu only)
+    - name: Install webkit2gtk (Ubuntu only)
       if: matrix.platform == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y webkit2gtk-4.0
-    - name: install app dependencies and build it
+
+    - uses: actions/checkout@v2
+
+    - name: Setup Node toolchain
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16
+
+    - name: Install Rust toolchain (stable)
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v1
+
+    - name: Install and build application
       run: yarn && yarn build
-    - uses: tauri-apps/tauri-action@v0
+
+    - name: Bundle application and publish release
+      uses: tauri-apps/tauri-action@v0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
